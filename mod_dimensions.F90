@@ -1,4 +1,7 @@
       module mod_dimensions
+#if defined (_OPENMP)
+      use omp_lib, only : omp_get_num_threads
+#endif
       implicit none
       public ! everything is public
 #if defined(RELO)
@@ -14,12 +17,10 @@
       parameter (iqr=1,  jqr=1)    !    single tile (TYPE=one or omp)
 #endif
 !
-! --- mxthrd= maximum number of OpenMP threads
+! --- mxthrd= number of OpenMP threads
       integer    mxthrd
 #if defined(_OPENMP)
-      parameter (mxthrd=8)  ! NOMP=0,1,2,4,8
-#else
-      parameter (mxthrd=1)  ! NOMP=0,1
+      !$OMP THREADPRIVATE(mxthrd)
 #endif
 !
 ! --- mxtrcr= maximum number of tracers
@@ -140,6 +141,13 @@
 !
 ! --- allocate information (gindex) that keeps do loops from running into land
 !
+      !$OMP PARALLEL DEFAULT(none)
+#if defined (_OPENMP)
+      mxthrd = omp_get_num_threads()
+#else
+      mxthrd = 1
+#endif
+      !$OMP END PARALLEL
       jblk = (jdm+2*nbdy+mxthrd-1)/mxthrd
 !
       imt1 =   1-nbdy
